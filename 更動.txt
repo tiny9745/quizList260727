@@ -1,0 +1,6 @@
+確認是否需要將quiz的表添加建立者id的外鍵
+
+
+@Transactional(readOnly = true)替換
+
+注意回滾

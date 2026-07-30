@@ -1,21 +1,130 @@
-.gradle
-**/build/
-!**/src/**/build/
+# =====================================
+# General
+# =====================================
 
-# Ignore Gradle GUI config
-gradle-app.setting
+HELP.md
 
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
 
-# Avoid ignore Gradle wrappper properties
-!gradle-wrapper.properties
+# =====================================
+# Gradle
+# =====================================
 
-# Cache of project
-.gradletasknamecache
+.gradle/
+build/
 
-# Eclipse Gradle plugin generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
+# Keep Gradle Wrapper
+!gradle/wrapper/gradle-wrapper.jar
+
+# Ignore nested build folders
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+
+# =====================================
+# Eclipse / STS
+# =====================================
+
+.apt_generated/
 .classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+bin/
+
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+
+# =====================================
+# IntelliJ IDEA
+# =====================================
+
+.idea/
+*.iws
+*.iml
+*.ipr
+
+out/
+
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+
+# =====================================
+# NetBeans
+# =====================================
+
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+
+# =====================================
+# VS Code
+# =====================================
+
+.vscode/
+
+
+# =====================================
+# Java
+# =====================================
+
+*.class
+
+
+# =====================================
+# Logs
+# =====================================
+
+*.log
+
+
+# =====================================
+# OS Generated Files
+# =====================================
+
+.DS_Store
+Thumbs.db
+
+
+# =====================================
+# Spring Boot Local Configuration
+# =====================================
+
+application-local.properties
+application-local.yml
+
+application-secret.properties
+application-secret.yml
+
+
+# =====================================
+# Environment Variables
+# =====================================
+
+.env
+.env.*
+
+
+# =====================================
+# Temporary Files
+# =====================================
+
+*.tmp
+*.temp
+*.bak
+*~
+
+
+# =====================================
+# Database Backup
+# =====================================
+
+*.sql.backup
+*.sql.bak
