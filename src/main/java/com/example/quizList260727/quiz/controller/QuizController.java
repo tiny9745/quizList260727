@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.quizList260727.common.dto.response.ApiResponse;
+import com.example.quizList260727.quiz.dto.request.PublishRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
@@ -60,5 +62,16 @@ public class QuizController {
 	public ResponseEntity<List<QuestionResponse>> getQuestionsByQuizId(@PathVariable("id") Long id) {
 		List<QuestionResponse> questions = quizService.getQuestionsByQuizId(id);
 		return ResponseEntity.ok(questions);
+	}
+
+	/**
+	 * 5. 根據問卷 id 更新對應的問卷發布狀態
+	 */
+	@PatchMapping("/{id}/publish")
+	public ResponseEntity<ApiResponse> updatePublish(@PathVariable("id") Long id,
+			@Valid @RequestBody PublishRequest request) {
+		request.setId(id);
+		quizService.updatePublishQuiz(request);
+		return ResponseEntity.ok(new ApiResponse(true, "更新發布狀態成功"));
 	}
 }

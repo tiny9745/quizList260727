@@ -43,6 +43,17 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 			@Param("endDate") LocalDate endDate, //
 			@Param("isPublished") Boolean isPublished);
 
+	/**
+	 * 只更新 is_published 這一個欄位，不觸碰 title/description/start_date/end_date， 供
+	 * QuizService.updatePublishStatus() 呼叫，切換發布狀態時不會連帶影響問卷本身其他資訊。
+	 */
+	@Modifying
+	@Query(value = "UPDATE quiz SET is_published = :isPublished WHERE id = :id", //
+			nativeQuery = true)
+	public int updatePublishStatus(//
+			@Param("id") Long id, //
+			@Param("isPublished") Boolean isPublished);
+
 	@Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
 	public Long getLastInsertedId();
 }

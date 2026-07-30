@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import com.example.quizList260727.common.exception.ResourceNotFoundException;
+import com.example.quizList260727.quiz.dto.request.PublishRequest;
 import com.example.quizList260727.quiz.dto.request.QuestionOptionRequest;
 import com.example.quizList260727.quiz.dto.request.QuestionRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
@@ -53,7 +54,7 @@ public class QuizService {
 		// 2. 寫入所有問題與選項
 		saveQuestionsAndOptions(newQuizId, request.getQuestions());
 	}
-	
+
 	/**
 	 * 2. 更新問卷 (Request 包含問卷以及對應的所有問題與選項)
 	 */
@@ -62,12 +63,12 @@ public class QuizService {
 		validateQuizTime(request);
 		// 更新得有quiz_id
 		Long id = request.getId();
-		if(id == null || id <= 0) {
+		if (id == null || id <= 0) {
 			throw new RuntimeException("Quiz not found with id: " + id);
 		}
 		// 1. 更新 Quiz 本體
-		int updatedRows = quizRepository.updateQuiz(id, request.getTitle(), request.getDescription(), request.getStartDate(),
-				request.getEndDate(), request.getIsPublished());
+		int updatedRows = quizRepository.updateQuiz(id, request.getTitle(), request.getDescription(),
+				request.getStartDate(), request.getEndDate(), request.getIsPublished());
 		// 找到得筆數
 		if (updatedRows == 0) {
 			throw new RuntimeException("Quiz not found with id: " + id);
@@ -79,7 +80,6 @@ public class QuizService {
 		// 3. 重新新增問題與選項
 		saveQuestionsAndOptions(id, request.getQuestions());
 	}
-
 
 	/**
 	 * 3. 取得所有的問卷列表 (僅問卷，沒有問題內容以及選項)
@@ -109,6 +109,17 @@ public class QuizService {
 				.orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + quizId));
 		List<Question> questions = questionRepository.findByQuizId(quizId);
 		return questions.stream().map(this::convertToQuestionDto).collect(Collectors.toList());
+	}
+
+	/**
+	 * 5. 更新發布狀態
+	 */
+	@Transactional(rollbackFor = Exception.class)
+	public void updatePublishQuiz(PublishRequest request) {
+		int count = quizRepository.updatePublishStatus(request.getId(), request.getIsPublished());
+		if (count == 0) {
+			throw new RuntimeException("找不到問卷");
+		}
 	}
 
 	// ==================== 私有輔助方法 ====================
