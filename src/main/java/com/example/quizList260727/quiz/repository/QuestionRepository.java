@@ -32,4 +32,9 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
 	@Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
 	public Long getLastInsertedId();
+	
+	@Modifying
+	@Query(value = "DELETE FROM question WHERE quiz_id IN (:quizIds)", nativeQuery = true)
+	public void deleteByQuizIds(@Param("quizIds") List<Long> quizIds);
+
 }

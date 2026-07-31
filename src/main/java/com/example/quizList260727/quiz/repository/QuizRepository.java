@@ -56,4 +56,11 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
 	@Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
 	public Long getLastInsertedId();
+
+	// quizIds= [1, 3, 4, 5]
+	// SQL 語法: DELETE FROM quiz WHERE id IN (1, 3, 4, 5)，IN 後面記得要加上小括號
+	@Modifying
+	@Query(value = "DELETE FROM quiz WHERE id IN (:quizIds)", nativeQuery = true)
+	public int deleteByQuizIds(@Param("quizIds") List<Long> quizIds);
+
 }

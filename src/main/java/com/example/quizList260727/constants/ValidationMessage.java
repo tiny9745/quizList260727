@@ -6,6 +6,7 @@ public class ValidationMessage {
 	
 	// Quiz Validation
 	public static final String QUIZ_ID_REQUIRED = "Quiz id cannot be null!!";
+	public static final String QUIZ_IDS_REQUIRED = "Quiz IDs list cannot be empty!!";
 	public static final String QUIZ_TITLE_REQUIRED = "Quiz title cannot be blank!!";
 	public static final String QUIZ_TITLE_OVER_LIMIT = "Quiz title out of range!!";
 	public static final String QUIZ_DESCRIPTION_REQUIRED = "Quiz description cannot be blank!!";

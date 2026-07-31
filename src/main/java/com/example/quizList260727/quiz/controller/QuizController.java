@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.quizList260727.common.dto.response.ApiResponse;
 import com.example.quizList260727.quiz.dto.request.PublishRequest;
+import com.example.quizList260727.quiz.dto.request.QuizDeleteRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
@@ -72,6 +73,16 @@ public class QuizController {
 			@Valid @RequestBody PublishRequest request) {
 		quizService.updatePublishQuiz(id, request);
 		return ResponseEntity.ok(new ApiResponse(true, "更新發布狀態成功"));
+	}
+
+	/**
+	 * 6. 根據問卷 id 刪除問卷
+	 */
+	@PostMapping("/delete")
+	public ResponseEntity<ApiResponse> deleteQuizzes(//
+			@Valid @RequestBody QuizDeleteRequest request) {
+		quizService.deleteQuizzes(request.getQuizIds());
+		return ResponseEntity.ok(ApiResponse.success("Quizzes deleted successfully!!"));
 	}
 
 }
