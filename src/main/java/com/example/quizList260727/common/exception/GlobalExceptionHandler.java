@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-	// ========== 1. @Valid 驗證失敗（欄位格式錯誤，例如描述未填、選項內容空白）==========
+	// ========== @Valid 驗證失敗（欄位格式錯誤，例如描述未填、選項內容空白）==========
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiResponse> handleValidation(MethodArgumentNotValidException ex) {
 		String message = ex.getBindingResult().getFieldErrors().stream().findFirst().map(FieldError::getDefaultMessage)
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.failure(message));
 	}
 
-	// ========== 2. 業務邏輯驗證失敗 ==========
+	// ========== 業務邏輯驗證失敗 ==========
 	// 對應 QuizService 內 validateQuizTime()、validateQuestionOptions() 拋出的例外，
 	// 這些訊息是程式本身寫死、可控的文字，可以安全地回傳給前端顯示
 	@ExceptionHandler(IllegalArgumentException.class)
@@ -51,21 +51,29 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.failure(ex.getMessage()));
 	}
 
-	// ========== 3. 查無資料 ==========
+	// ========== 查無資料 ==========
 	// 對應 QuizService.getQuestionsByQuizId() 查不到問卷時拋出的例外
 	@ExceptionHandler(ResourceNotFoundException.class)
 	public ResponseEntity<ApiResponse> handleNotFound(ResourceNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.failure(ex.getMessage()));
 	}
 
-	// ========== 4. 資料庫存取例外（SQL錯誤、連線失敗、表不存在等）==========
+	// ========== 資料庫存取例外（SQL錯誤、連線失敗、表不存在等）==========
 	@ExceptionHandler(DataAccessException.class)
 	public ResponseEntity<ApiResponse> handleDataAccessException(DataAccessException ex) {
 		log.error("資料庫存取發生錯誤", ex); // 完整堆疊只留在伺服器log，絕不回傳給前端
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.failure("伺服器發生錯誤，請稍後再試"));
 	}
+	
+	
+	// ========== 不合法的請求(資料目前狀態不允許) ==========
+	@ExceptionHandler(IllegalStateException.class)
+	public ResponseEntity<ApiResponse> handleIllegalState(IllegalStateException e) {
 
-	// ========== 5. 保底：其餘所有未預期的例外 ==========
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(false, e.getMessage()));
+	}
+
+	// ========== 保底：其餘所有未預期的例外 ==========
 	// 刻意不直接回傳 ex.getMessage()，因為無法保證訊息內容不含內部實作細節
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiResponse> handleUnexpectedException(Exception ex) {

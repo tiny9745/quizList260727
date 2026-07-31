@@ -66,12 +66,24 @@ public class QuizService {
 		if (id == null || id <= 0) {
 			throw new RuntimeException("Quiz not found with id: " + id);
 		}
+
+		// 攔截：此問卷若已發布，禁止修改題目與選項。
+		// 用 quizRepository.findQuizById(id) 查出目前的 Quiz，檢查 isPublished 欄位；
+		// 同時這次查詢也順便取代了原本「id 是否存在」的檢查，找不到就直接丟 ResourceNotFoundException。
+		Quiz quiz = quizRepository.findQuizById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
+		if (Boolean.TRUE.equals(quiz.getIsPublished())) {
+			throw new IllegalStateException("Quiz is published, edit prohibited!");
+		}
+
 		// 1. 更新 Quiz 本體
 		int updatedRows = quizRepository.updateQuiz(id, request.getTitle(), request.getDescription(),
 				request.getStartDate(), request.getEndDate(), request.getIsPublished());
-		// 找到得筆數
+		// 理論上不會發生（上面 findQuizById 剛查到這筆資料），
+		// 保留此檢查是為了防範極端情況：兩次查詢之間，該問卷剛好被其他請求刪除（race condition），
+		// 避免在沒有任何提示的情況下，讓呼叫端誤以為更新成功、但實際上什麼都沒被更新到。
 		if (updatedRows == 0) {
-			throw new RuntimeException("Quiz not found with id: " + id);
+			throw new ResourceNotFoundException("Quiz not found with id: " + id);
 		}
 		/* 先刪除舊的，再新增更新的 */
 		// 2. 刪除舊有選項與問題
@@ -115,8 +127,8 @@ public class QuizService {
 	 * 5. 更新發布狀態
 	 */
 	@Transactional(rollbackFor = Exception.class)
-	public void updatePublishQuiz(PublishRequest request) {
-		int count = quizRepository.updatePublishStatus(request.getId(), request.getIsPublished());
+	public void updatePublishQuiz(Long id, PublishRequest request) {
+		int count = quizRepository.updatePublishStatus(id, request.getIsPublished());
 		if (count == 0) {
 			throw new RuntimeException("找不到問卷");
 		}

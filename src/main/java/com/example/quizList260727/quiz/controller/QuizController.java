@@ -70,8 +70,8 @@ public class QuizController {
 	@PatchMapping("/{id}/publish")
 	public ResponseEntity<ApiResponse> updatePublish(@PathVariable("id") Long id,
 			@Valid @RequestBody PublishRequest request) {
-		request.setId(id);
-		quizService.updatePublishQuiz(request);
+		quizService.updatePublishQuiz(id, request);
 		return ResponseEntity.ok(new ApiResponse(true, "更新發布狀態成功"));
 	}
+
 }
