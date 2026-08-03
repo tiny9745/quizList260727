@@ -20,6 +20,7 @@ import com.example.quizList260727.quiz.dto.request.QuizRequest;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
 import com.example.quizList260727.quiz.service.QuizService;
+import com.example.quizList260727.reply.dto.FillQuizRequest;
 
 import jakarta.validation.Valid;
 
@@ -83,6 +84,15 @@ public class QuizController {
 			@Valid @RequestBody QuizDeleteRequest request) {
 		quizService.deleteQuizzes(request.getQuizIds());
 		return ResponseEntity.ok(ApiResponse.success("Quizzes deleted successfully!!"));
+	}
+
+	/**
+	 * 7. 填寫並提交問卷 POST /api/quiz/fill
+	 */
+	@PostMapping("/fill")
+	public ResponseEntity<ApiResponse> fillQuiz(@Valid @RequestBody FillQuizRequest request) {
+		quizService.fillQuiz(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Quiz submitted successfully!!"));
 	}
 
 }
