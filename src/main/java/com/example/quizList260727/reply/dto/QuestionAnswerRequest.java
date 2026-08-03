@@ -9,7 +9,9 @@ import jakarta.validation.constraints.NotNull;
 public class QuestionAnswerRequest {
 	@NotNull(message = ValidationMessage.QUESTION_ID_REQUIRED)
 	private Long questionId;
+	
 	private List<Long> optionIds; // 單選或多選題對應的選項 ID 列表
+	
 	private String answerText; // 簡答題內容
 
 	public Long getQuestionId() {
