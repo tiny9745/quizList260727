@@ -27,4 +27,11 @@ public class ValidationMessage {
 	public static final String OPTION_CODE_OVER_LIMIT = "Option code out of range!!";
 	public static final String OPTION_TEXT_REQUIRED = "Option text cannot be blank!!";
 	public static final String OPTION_TEXT_OVER_LIMIT = "Option text out of range!!";
+	
+	// Fill Quiz Validation
+	   public static final String EMAIL_REQUIRED = "Email address cannot be blank!!";
+	   public static final String EMAIL_FORMAT_INVALID = "Invalid email format!!";
+	   public static final String QUESTION_ANSWERS_REQUIRED = "Question answers list cannot be empty!!";
+	   public static final String QUESTION_ID_REQUIRED = "Question ID cannot be null!!";
+
 }
