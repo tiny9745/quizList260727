@@ -28,7 +28,7 @@ public enum QuestionType {
 	 *              所以會自動呼叫 fromString 這個方法
 	 */
 	@JsonCreator
-	public static QuestionType fromString(String input) {
+	public static QuestionType questionTypeStringFromEnum(String input) {
 		if (input == null || input.isBlank()) {
 			return null;
 		}

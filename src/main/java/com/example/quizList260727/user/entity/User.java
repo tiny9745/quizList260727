@@ -2,8 +2,12 @@ package com.example.quizList260727.user.entity;
 
 import java.time.LocalDateTime;
 
+import com.example.quizList260727.user.enums.MemberLevel;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,6 +44,10 @@ public class User {
 
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "member_level", nullable = false, length = 20)
+	private MemberLevel permissions;
 
 	public Long getId() {
 		return id;
@@ -96,4 +104,14 @@ public class User {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public MemberLevel getPermissions() {
+		return permissions;
+	}
+
+	public void setPermissions(MemberLevel permissions) {
+		this.permissions = permissions;
+	}
+
+	
 }

@@ -72,7 +72,7 @@ public class QuizController {
 	public ResponseEntity<ApiResponse> updatePublish(@PathVariable("id") Long id,
 			@Valid @RequestBody PublishRequest request) {
 		quizService.updatePublishQuiz(id, request);
-		return ResponseEntity.ok(new ApiResponse(true, "更新發布狀態成功"));
+		return ResponseEntity.ok(new ApiResponse(true, "Quiz publish update successfully!"));
 	}
 
 	/**
