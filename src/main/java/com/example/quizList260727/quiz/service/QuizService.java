@@ -1,9 +1,11 @@
 package com.example.quizList260727.quiz.service;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,9 +19,12 @@ import com.example.quizList260727.quiz.dto.request.PublishRequest;
 import com.example.quizList260727.quiz.dto.request.QuestionOptionRequest;
 import com.example.quizList260727.quiz.dto.request.QuestionRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
+import com.example.quizList260727.quiz.dto.response.AnswerDetail;
+import com.example.quizList260727.quiz.dto.response.OptionDetail;
 import com.example.quizList260727.quiz.dto.response.QuestionOptionResponse;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
+import com.example.quizList260727.quiz.dto.response.QuizSubmissionResponse;
 import com.example.quizList260727.quiz.entity.Question;
 import com.example.quizList260727.quiz.entity.QuestionOption;
 import com.example.quizList260727.quiz.entity.Quiz;
@@ -29,6 +34,8 @@ import com.example.quizList260727.quiz.repository.QuestionRepository;
 import com.example.quizList260727.quiz.repository.QuizRepository;
 import com.example.quizList260727.reply.dto.FillQuizRequest;
 import com.example.quizList260727.reply.dto.QuestionAnswerRequest;
+import com.example.quizList260727.reply.entity.QuizReply;
+import com.example.quizList260727.reply.entity.ResponseDetail;
 import com.example.quizList260727.reply.repository.QuizReplyRepository;
 import com.example.quizList260727.reply.repository.ResponseDetailRepository;
 
@@ -44,7 +51,7 @@ public class QuizService {
 	private QuestionOptionRepository questionOptionRepository;
 
 	@Autowired
-	private QuizReplyRepository quizResponseRepository;
+	private QuizReplyRepository quizReplyRepository;
 
 	@Autowired
 	private ResponseDetailRepository responseDetailRepository;
@@ -199,10 +206,74 @@ public class QuizService {
 		validateFillAnswers(questions, request.getAnswers());
 		// 4. 寫入 quiz_reply (主表)
 		// 註：若此 Email 在此 Quiz 已填過，會觸發 uk_quiz_user 唯一約束並拋出 Database Exception
-		quizResponseRepository.insertQuizReply(request.getQuizId(), request.getUserEmail());
-		Long responseId = quizResponseRepository.getLastInsertedId();
+		quizReplyRepository.insertQuizReply(request.getQuizId(), request.getUserEmail());
+		Long responseId = quizReplyRepository.getLastInsertedId();
 		// 5. 寫入 response_detail (明細表)
 		saveResponseDetails(responseId, request.getAnswers());
+	}
+
+	/**
+	 * 7. 透過問卷 ID 取得所有填答者的回答紀錄 (含所有選項及勾選狀態)
+	 */
+	@Transactional(readOnly = true)
+	public List<QuizSubmissionResponse> getQuizSubmissions(Long quizId) {
+		// 1. 驗證問卷是否存在
+		quizRepository.findQuizById(quizId)
+				.orElseThrow(() -> new RuntimeException("Quiz not found with id: " + quizId));
+		// 2. 取得該問卷的所有問題與對應選項(預先載入，防範效能問題)
+		List<Question> questions = questionRepository.findByQuizId(quizId);
+
+		// 建立每個 questionId 對應的 Option List Map
+		Map<Long, List<QuestionOption>> questionOptionsMap = questions.stream()
+				.collect(Collectors.toMap(Question::getId, q -> questionOptionRepository.findByQuestionId(q.getId())));
+		// 3. 取得該問卷的所有填答紀錄主表
+		List<QuizReply> quizReplies = quizReplyRepository.findByQuizId(quizId);
+		// 4. 將該問卷的所有填答紀錄組合成 Response
+		return quizReplies.stream().map(response -> {
+			QuizSubmissionResponse subDto = new QuizSubmissionResponse();
+			subDto.setResponseId(response.getId());
+			subDto.setQuizId(quizId);
+			subDto.setUserEmail(response.getUserEmail());
+			subDto.setSubmittedAt(response.getSubmittedAt());
+			// 查出該次提交的所有 detail
+			List<ResponseDetail> details = responseDetailRepository.findByResponseId(response.getId());
+			// 依 questionId 分組明細 (一題可能多選，對應多筆 ResponseDetail)
+			Map<Long, List<ResponseDetail>> detailMap = details.stream()
+					.collect(Collectors.groupingBy(ResponseDetail::getQuestionId));
+			// 針對問卷的每一題，產生作答結果 AnswerDetail
+			List<AnswerDetail> answerDetails = questions.stream().map(q -> {
+				AnswerDetail ansDetail = new AnswerDetail();
+				ansDetail.setQuestionId(q.getId());
+				ansDetail.setQuestionNum(q.getQuestionNum());
+				ansDetail.setQuestionTitle(q.getTitle());
+				ansDetail.setQuestionType(q.getType());
+				List<ResponseDetail> userDetails = detailMap.getOrDefault(q.getId(), Collections.emptyList());
+				// 選擇題
+				if (q.getType() == QuestionType.SINGLE || q.getType() == QuestionType.MULTI) {
+					// 收集使用者勾選的 option_id 集合
+					Set<Long> selectedOptionIds = userDetails.stream().map(ResponseDetail::getOptionId)
+							.filter(Objects::nonNull).collect(Collectors.toSet());
+					// 取得該題所有標準選項，並計算 isSelected
+					List<QuestionOption> options = questionOptionsMap.getOrDefault(q.getId(), Collections.emptyList());
+					List<OptionDetail> optionDtos = options.stream().map(opt -> new OptionDetail(opt.getId(),
+							opt.getOptionCode(), opt.getOptionText(), selectedOptionIds.contains(opt.getId()) // 是否被選取
+					)).collect(Collectors.toList());
+					ansDetail.setOptions(optionDtos);
+					ansDetail.setAnswerText(null);
+				} else if (q.getType() == QuestionType.TEXT) {
+					// 文字題直接取得 answerText
+					String text = userDetails.stream().map( //
+							ResponseDetail::getAnswerText).filter(Objects::nonNull) // 過濾:只保留 nonNull的值
+							.findFirst() // 取得過濾後第一筆 onNull 的資料
+							.orElse(null); // 如果過濾後沒有任何有效值，就回傳 null
+					ansDetail.setOptions(null);
+					ansDetail.setAnswerText(text);
+				}
+				return ansDetail;
+			}).collect(Collectors.toList());
+			subDto.setAnswers(answerDetails);
+			return subDto;
+		}).collect(Collectors.toList());
 	}
 
 	// ==================== 私有輔助方法 ====================

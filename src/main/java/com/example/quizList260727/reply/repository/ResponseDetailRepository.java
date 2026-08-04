@@ -1,5 +1,7 @@
 package com.example.quizList260727.reply.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +20,9 @@ public interface ResponseDetailRepository extends JpaRepository<ResponseDetail, 
 			@Param("questionId") Long questionId, //
 			@Param("optionId") Long optionId, //
 			@Param("answerText") String answerText);
+	
+	/* 依據 response_id 查出該次提交的所有回答細節 */
+	@Query(value = "SELECT * FROM response_detail WHERE response_id = ?1", nativeQuery = true)
+	public List<ResponseDetail> findByResponseId(Long responseId);
+
 }

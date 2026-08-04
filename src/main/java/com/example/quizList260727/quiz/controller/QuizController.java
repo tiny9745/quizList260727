@@ -19,6 +19,7 @@ import com.example.quizList260727.quiz.dto.request.QuizDeleteRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
+import com.example.quizList260727.quiz.dto.response.QuizSubmissionResponse;
 import com.example.quizList260727.quiz.service.QuizService;
 import com.example.quizList260727.reply.dto.FillQuizRequest;
 
@@ -89,15 +90,19 @@ public class QuizController {
 	/**
 	 * 7. 填寫並提交問卷 POST /api/quiz/fill
 	 */
-//	@PostMapping("/fill")
-//	public ResponseEntity<ApiResponse> fillQuiz(@Valid @RequestBody FillQuizRequest request) {
-//		quizService.fillQuiz(request);
-//		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Quiz submitted successfully!!"));
-//	}
 	@PostMapping("/fill")
 	public ResponseEntity<Void> fillQuiz(@Valid @RequestBody FillQuizRequest request) {
 		quizService.fillQuiz(request);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
+
+	/**
+	 * 8. 透過問卷 ID 取得該張問卷所有填答者的回答 GET /api/quiz/{id}/submissions
+	 */
+	@GetMapping("/{id}/submissions")
+	public ResponseEntity<List<QuizSubmissionResponse>> getQuizSubmissions(@PathVariable("id") Long id) {
+		List<QuizSubmissionResponse> submissions = quizService.getQuizSubmissions(id);
+		return ResponseEntity.ok(submissions);
 	}
 
 }

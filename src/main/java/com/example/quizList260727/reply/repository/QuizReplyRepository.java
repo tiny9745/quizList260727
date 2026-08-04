@@ -1,5 +1,7 @@
 package com.example.quizList260727.reply.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +21,10 @@ public interface QuizReplyRepository extends JpaRepository<QuizReply, Long> {
 
 	@Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
 	public Long getLastInsertedId();
+	
+	/* 依據問卷 ID 查出所有填答紀錄 (依提交時間遞減排序) */
+	@Query(value = "SELECT * FROM quiz_reply WHERE quiz_id = ?1 " //
+			+ " ORDER BY submitted_at DESC", nativeQuery = true)
+	public List<QuizReply> findByQuizId(Long quizId);
+
 }
