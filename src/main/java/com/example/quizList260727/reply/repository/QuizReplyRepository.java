@@ -9,11 +9,11 @@ import org.springframework.stereotype.Repository;
 import com.example.quizList260727.reply.entity.QuizReply;
 
 @Repository
-public interface QuizResponseRepository extends JpaRepository<QuizReply, Long> {
+public interface QuizReplyRepository extends JpaRepository<QuizReply, Long> {
 	@Modifying
-	@Query(value = "INSERT INTO quiz_response (quiz_id, user_email) " //
+	@Query(value = "INSERT INTO quiz_reply (quiz_id, user_email) " //
 			+ " VALUES (:quizId, :userEmail)", nativeQuery = true)
-	public void insertQuizResponse(//
+	public void insertQuizReply(//
 			@Param("quizId") Long quizId, //
 			@Param("userEmail") String userEmail);
 

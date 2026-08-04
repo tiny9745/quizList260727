@@ -89,10 +89,15 @@ public class QuizController {
 	/**
 	 * 7. 填寫並提交問卷 POST /api/quiz/fill
 	 */
+//	@PostMapping("/fill")
+//	public ResponseEntity<ApiResponse> fillQuiz(@Valid @RequestBody FillQuizRequest request) {
+//		quizService.fillQuiz(request);
+//		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Quiz submitted successfully!!"));
+//	}
 	@PostMapping("/fill")
-	public ResponseEntity<ApiResponse> fillQuiz(@Valid @RequestBody FillQuizRequest request) {
+	public ResponseEntity<Void> fillQuiz(@Valid @RequestBody FillQuizRequest request) {
 		quizService.fillQuiz(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Quiz submitted successfully!!"));
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
 }

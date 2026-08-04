@@ -29,7 +29,7 @@ import com.example.quizList260727.quiz.repository.QuestionRepository;
 import com.example.quizList260727.quiz.repository.QuizRepository;
 import com.example.quizList260727.reply.dto.FillQuizRequest;
 import com.example.quizList260727.reply.dto.QuestionAnswerRequest;
-import com.example.quizList260727.reply.repository.QuizResponseRepository;
+import com.example.quizList260727.reply.repository.QuizReplyRepository;
 import com.example.quizList260727.reply.repository.ResponseDetailRepository;
 
 @Service
@@ -44,7 +44,7 @@ public class QuizService {
 	private QuestionOptionRepository questionOptionRepository;
 
 	@Autowired
-	private QuizResponseRepository quizResponseRepository;
+	private QuizReplyRepository quizResponseRepository;
 
 	@Autowired
 	private ResponseDetailRepository responseDetailRepository;
@@ -197,9 +197,9 @@ public class QuizService {
 		// 3. 檢查必填欄位與答案合法性
 		List<Question> questions = questionRepository.findByQuizId(quiz.getId());
 		validateFillAnswers(questions, request.getAnswers());
-		// 4. 寫入 quiz_response (主表)
+		// 4. 寫入 quiz_reply (主表)
 		// 註：若此 Email 在此 Quiz 已填過，會觸發 uk_quiz_user 唯一約束並拋出 Database Exception
-		quizResponseRepository.insertQuizResponse(request.getQuizId(), request.getUserEmail());
+		quizResponseRepository.insertQuizReply(request.getQuizId(), request.getUserEmail());
 		Long responseId = quizResponseRepository.getLastInsertedId();
 		// 5. 寫入 response_detail (明細表)
 		saveResponseDetails(responseId, request.getAnswers());
@@ -257,7 +257,7 @@ public class QuizService {
 		List<QuestionOption> options = questionOptionRepository.findByQuestionId(question.getId());
 		List<QuestionOptionResponse> oDtos = options.stream().map(o -> {
 			QuestionOptionResponse oDto = new QuestionOptionResponse();
-			oDto.setId(o.getId());
+			// oDto.setId(o.getId()); // 若不對外暴露主鍵，移除此行
 			oDto.setOptionCode(o.getOptionCode());
 			oDto.setOptionText(o.getOptionText());
 			return oDto;
@@ -291,16 +291,25 @@ public class QuizService {
 
 	// 回覆
 	private void validateFillAnswers(List<Question> questions, List<QuestionAnswerRequest> answers) {
+
+		System.out.println("確認接收的資料是否合法中");
+		System.out.println("DB Questions:");
+		questions.forEach(q -> System.out.println("question id=" + q.getId() + ", num=" + q.getQuestionNum()));
+
+		System.out.println("User Answers:");
+
+		answers.forEach(a -> System.out.println("questionId=" + a.getQuestionId()));
+
 		/**
-		 * 轉成 Map 的原因: 
+		 * 轉成 Map 的原因:
 		 * 
 		 * 1. 大幅提升執行效率(降低時間複雜度) <br>
 		 * 2. 直接用 Key 查詢 <br>
-		 * 3. 自動過濾前端傳遞的「重複答案」: (k1, k2) -> k1 表示 有重複 key 時，保留舊的 key(k1) 對應的值 
+		 * 3. 自動過濾前端傳遞的「重複答案」: (k1, k2) -> k1 表示 有重複 key 時，保留舊的 key(k1) 對應的值
 		 */
 		Map<Long, QuestionAnswerRequest> answerMap = answers.stream()
 				.collect(Collectors.toMap(QuestionAnswerRequest::getQuestionId, a -> a, (k1, k2) -> k1));
-		// 以資料庫的標準題目為基準，逐一檢查使用者的答案是否合規
+
 		for (Question question : questions) {
 			QuestionAnswerRequest userAns = answerMap.get(question.getId());
 			// 檢查必填題
@@ -312,29 +321,29 @@ public class QuizService {
 			// 如果使用者有傳遞答案，且為選擇題，進行選項合法性檢查
 			if (userAns != null
 					&& (question.getType() == QuestionType.SINGLE || question.getType() == QuestionType.MULTI)) {
-				List<Long> submittedOptionIds = userAns.getOptionIds();
-				if (submittedOptionIds != null && !submittedOptionIds.isEmpty()) {
-					// 2. 自動去重（防止重複傳入相同的 option_id，例如 [10, 10, 11, 12, 13]）
-					Set<Long> uniqueSubmittedIds = new HashSet<>(submittedOptionIds);
-					// 3. 查出資料庫中該題目「真正擁有」的所有 Option IDs
+				List<String> submittedOptionCodes = userAns.getOptionCodes();
+				if (submittedOptionCodes != null && !submittedOptionCodes.isEmpty()) {
+					// 1. 自動去重（防止重複傳入相同的 option_code，例如 ["A", "A", "B"]）
+					Set<String> uniqueSubmittedCodes = new HashSet<>(submittedOptionCodes);
+					// 2. 查出資料庫中該題目「真正擁有」的所有 Option Code
 					List<QuestionOption> validOptions = questionOptionRepository.findByQuestionId(question.getId());
-					Set<Long> validOptionIds = validOptions.stream().map(QuestionOption::getId)
+					Set<String> validOptionCodes = validOptions.stream().map(QuestionOption::getOptionCode)
 							.collect(Collectors.toSet());
-					// 4. 數量與範圍驗證：
-					// A. 檢查傳入的選項數量是否超過資料庫該題的選項總數 (例如選項只有 4 個，答案卻有 5 個)
-					if (uniqueSubmittedIds.size() > validOptionIds.size()) {
+					// 3. 數量與範圍驗證：
+					// A. 檢查傳入的選項數量是否超過資料庫該題的選項總數
+					if (uniqueSubmittedCodes.size() > validOptionCodes.size()) {
 						throw new IllegalArgumentException("Question #" + question.getQuestionNum()
 								+ " has invalid/excessive option selections!!");
 					}
-					// B. 檢查傳入的每一個 option_id 是否真的屬於該題目 (防止偷渡其他題目的 option_id)
-					for (Long optionId : uniqueSubmittedIds) {
-						if (!validOptionIds.contains(optionId)) {
+					// B. 檢查傳入的每一個 option_code 是否真的屬於該題目
+					for (String optionCode : uniqueSubmittedCodes) {
+						if (!validOptionCodes.contains(optionCode)) {
 							throw new IllegalArgumentException("Question #" + question.getQuestionNum()
-									+ " contains an invalid option ID: " + optionId);
+									+ " contains an invalid option code: " + optionCode);
 						}
 					}
-					// 5. 單選題規則檢查 (不可選超過 1 個不同選項)
-					if (question.getType() == QuestionType.SINGLE && uniqueSubmittedIds.size() > 1) {
+					// 4. 單選題規則檢查 (不可選超過 1 個不同選項)
+					if (question.getType() == QuestionType.SINGLE && uniqueSubmittedCodes.size() > 1) {
 						throw new IllegalArgumentException(
 								"Question #" + question.getQuestionNum() + " is a single-choice question!!");
 					}
@@ -345,7 +354,7 @@ public class QuizService {
 
 	private boolean isAnswerEmpty(QuestionType type, QuestionAnswerRequest ans) {
 		if (type == QuestionType.SINGLE || type == QuestionType.MULTI) {
-			return ans.getOptionIds() == null || ans.getOptionIds().isEmpty();
+			return ans.getOptionCodes() == null || ans.getOptionCodes().isEmpty();
 		} else if (type == QuestionType.TEXT) {
 			return ans.getAnswerText() == null || ans.getAnswerText().isBlank();
 		}
@@ -354,8 +363,19 @@ public class QuizService {
 
 	private void saveResponseDetails(Long responseId, List<QuestionAnswerRequest> answers) {
 		for (QuestionAnswerRequest ans : answers) {
-			if (ans.getOptionIds() != null && !ans.getOptionIds().isEmpty()) {
-				for (Long optionId : ans.getOptionIds()) {
+			if (ans.getOptionCodes() != null && !ans.getOptionCodes().isEmpty()) {
+				// 查出該題目所有選項，建立 optionCode -> id 的對照表
+				List<QuestionOption> validOptions = questionOptionRepository.findByQuestionId(ans.getQuestionId());
+				Map<String, Long> codeToIdMap = validOptions.stream()
+						.collect(Collectors.toMap(QuestionOption::getOptionCode, QuestionOption::getId));
+
+				for (String optionCode : ans.getOptionCodes()) {
+					Long optionId = codeToIdMap.get(optionCode);
+					// 理論上不會是 null，因為 validateFillAnswers 已驗證過合法性；
+					// 保留此檢查以防範極端 race condition（驗證後、寫入前，選項被異動）
+					if (optionId == null) {
+						throw new IllegalArgumentException("Option code not found during save: " + optionCode);
+					}
 					responseDetailRepository.insertDetail(responseId, ans.getQuestionId(), optionId, null);
 				}
 			} else if (ans.getAnswerText() != null && !ans.getAnswerText().isBlank()) {

@@ -18,7 +18,7 @@ public class QuestionOption {
 	@Column(name = "question_id", nullable = false)
 	private Long questionId; // 直接記錄 questionId
 
-	@Column(name = "option_code", length = 10)
+	@Column(name = "option_code", length = 255)
 	private String optionCode; // 選項編號 (如 A, B, C)
 
 	@Column(name = "option_text", nullable = false, length = 255)

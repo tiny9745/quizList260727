@@ -9,9 +9,9 @@ import jakarta.validation.constraints.NotNull;
 public class QuestionAnswerRequest {
 	@NotNull(message = ValidationMessage.QUESTION_ID_REQUIRED)
 	private Long questionId;
-	
-	private List<Long> optionIds; // 單選或多選題對應的選項 ID 列表
-	
+
+	private List<String> optionCodes; // 使用者選擇的選項代碼（對應 option_code，例如 "A", "B"）
+
 	private String answerText; // 簡答題內容
 
 	public Long getQuestionId() {
@@ -22,12 +22,12 @@ public class QuestionAnswerRequest {
 		this.questionId = questionId;
 	}
 
-	public List<Long> getOptionIds() {
-		return optionIds;
+	public List<String> getOptionCodes() {
+		return optionCodes;
 	}
 
-	public void setOptionIds(List<Long> optionIds) {
-		this.optionIds = optionIds;
+	public void setOptionCodes(List<String> optionCodes) {
+		this.optionCodes = optionCodes;
 	}
 
 	public String getAnswerText() {
