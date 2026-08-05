@@ -19,6 +19,7 @@ import com.example.quizList260727.quiz.dto.request.QuizDeleteRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
+import com.example.quizList260727.quiz.dto.response.QuizStatResponse;
 import com.example.quizList260727.quiz.dto.response.QuizSubmissionResponse;
 import com.example.quizList260727.quiz.service.QuizService;
 import com.example.quizList260727.reply.dto.FillQuizRequest;
@@ -103,6 +104,15 @@ public class QuizController {
 	public ResponseEntity<List<QuizSubmissionResponse>> getQuizSubmissions(@PathVariable("id") Long id) {
 		List<QuizSubmissionResponse> submissions = quizService.getQuizSubmissions(id);
 		return ResponseEntity.ok(submissions);
+	}
+
+	/**
+	 * 9. 取得問卷統計結果 GET /api/quiz/{id}/statistics
+	 */
+	@GetMapping("/{id}/statistics")
+	public ResponseEntity<QuizStatResponse> getQuizStatistics(@PathVariable("id") Long id) {
+		QuizStatResponse statistics = quizService.getQuizStatistics(id);
+		return ResponseEntity.ok(statistics);
 	}
 
 }

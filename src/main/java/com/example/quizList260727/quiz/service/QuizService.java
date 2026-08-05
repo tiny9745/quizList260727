@@ -1,5 +1,7 @@
 package com.example.quizList260727.quiz.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,9 +23,12 @@ import com.example.quizList260727.quiz.dto.request.QuestionRequest;
 import com.example.quizList260727.quiz.dto.request.QuizRequest;
 import com.example.quizList260727.quiz.dto.response.AnswerDetail;
 import com.example.quizList260727.quiz.dto.response.OptionDetail;
+import com.example.quizList260727.quiz.dto.response.OptionStatDto;
 import com.example.quizList260727.quiz.dto.response.QuestionOptionResponse;
 import com.example.quizList260727.quiz.dto.response.QuestionResponse;
+import com.example.quizList260727.quiz.dto.response.QuestionStatDto;
 import com.example.quizList260727.quiz.dto.response.QuizResponse;
+import com.example.quizList260727.quiz.dto.response.QuizStatResponse;
 import com.example.quizList260727.quiz.dto.response.QuizSubmissionResponse;
 import com.example.quizList260727.quiz.entity.Question;
 import com.example.quizList260727.quiz.entity.QuestionOption;
@@ -274,6 +279,83 @@ public class QuizService {
 			subDto.setAnswers(answerDetails);
 			return subDto;
 		}).collect(Collectors.toList());
+	}
+
+	/**
+	 * 9. 取得問卷的統計分析結果
+	 */
+	@Transactional(readOnly = true)
+	public QuizStatResponse getQuizStatistics(Long quizId) {
+		// 1. 驗證問卷是否存在
+		Quiz quiz = quizRepository.findQuizById(quizId)
+				.orElseThrow(() -> new RuntimeException("Quiz not found with id: " + quizId));
+		// 2. 取得該問卷的所有填答紀錄主表 (計算總填答人數)
+		List<QuizReply> quizReplies = quizReplyRepository.findByQuizId(quizId);
+		long totalRespondents = quizReplies.size();
+		// 3. 取得該問卷的所有問題與選項
+		List<Question> questions = questionRepository.findByQuizId(quizId);
+		// 4. 收集所有填答細節
+		// 先收集所有的 responseId
+		List<Long> responseIds = quizReplies.stream().map(QuizReply::getId).collect(Collectors.toList());
+		// 如果完全無人填寫，直接回傳全為 0 的統計
+		List<ResponseDetail> allDetails;
+		if (responseIds.isEmpty()) {
+			allDetails = Collections.emptyList();
+		} else {
+			// 查出該問卷所有填答者的回答明細
+			allDetails = responseIds.stream().flatMap(resId -> responseDetailRepository.findByResponseId(resId).stream())
+					.collect(Collectors.toList());
+		}
+		// 5. 將明細依據 questionId 分組
+		Map<Long, List<ResponseDetail>> detailsByQuestion = allDetails.stream()
+				.collect(Collectors.groupingBy(ResponseDetail::getQuestionId));
+		// 6. 計算每道題目的統計資料
+		List<QuestionStatDto> questionStats = questions.stream().map(q -> {
+			QuestionStatDto qStat = new QuestionStatDto();
+			qStat.setQuestionId(q.getId());
+			qStat.setQuestionNum(q.getQuestionNum());
+			qStat.setQuestionTitle(q.getTitle());
+			qStat.setQuestionType(q.getType());
+			List<ResponseDetail> qDetails = detailsByQuestion.getOrDefault(q.getId(), Collections.emptyList());
+			if (q.getType() == QuestionType.SINGLE || q.getType() == QuestionType.MULTI) {
+				// 【選擇題】計算選項以及被選擇次數
+				Map<Long, Long> optionCountMap = qDetails.stream().filter(d -> d.getOptionId() != null)
+						.collect(Collectors.groupingBy(ResponseDetail::getOptionId, Collectors.counting()));
+				List<QuestionOption> options = questionOptionRepository.findByQuestionId(q.getId());
+
+				List<OptionStatDto> optionStats = options.stream().map(opt -> {
+					// count: 該選項被勾選的總次數
+					long count = optionCountMap.getOrDefault(opt.getId(), 0L);
+
+					// 計算百分比 = (勾選人數 / 總填答人數) * 100
+					BigDecimal percentage = BigDecimal.ZERO;
+					if (totalRespondents > 0) {
+						percentage = BigDecimal.valueOf(count).multiply(BigDecimal.valueOf(100))
+								// BigDecimal.valueOf(totalRespondents): 除數(總填答人數)
+								// 2: 算出來的百分比會保留到「小數點後第 2 位」
+								// RoundingMode.HALF_UP: 代表捨入模式為四捨五入
+								.divide(BigDecimal.valueOf(totalRespondents), 2, RoundingMode.HALF_UP);
+					}
+					return new OptionStatDto(opt.getId(), opt.getOptionCode(), opt.getOptionText(), count, percentage);
+				}).collect(Collectors.toList());
+				qStat.setOptionStats(optionStats);
+				qStat.setTextAnswers(null);
+			} else if (q.getType() == QuestionType.TEXT) {
+				// 【簡答題】收集所有文字回答 (過濾空白與 null)
+				List<String> texts = qDetails.stream().map(ResponseDetail::getAnswerText)
+						.filter(t -> t != null && !t.isBlank()).collect(Collectors.toList());
+				qStat.setOptionStats(null);
+				qStat.setTextAnswers(texts);
+			}
+			return qStat;
+		}).collect(Collectors.toList());
+		// 7. 組裝返回的 Response
+		QuizStatResponse statResponse = new QuizStatResponse();
+		statResponse.setQuizId(quiz.getId());
+		statResponse.setQuizTitle(quiz.getTitle());
+		statResponse.setTotalRespondents(totalRespondents);
+		statResponse.setQuestionStats(questionStats);
+		return statResponse;
 	}
 
 	// ==================== 私有輔助方法 ====================
