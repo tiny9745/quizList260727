@@ -213,7 +213,7 @@ public class QuizService {
 	}
 
 	/**
-	 * 7. 透過問卷 ID 取得所有填答者的回答紀錄 (含所有選項及勾選狀態)
+	 * 8. 透過問卷 ID 取得所有填答者的回答紀錄 (含所有選項及勾選狀態)
 	 */
 	@Transactional(readOnly = true)
 	public List<QuizSubmissionResponse> getQuizSubmissions(Long quizId) {
