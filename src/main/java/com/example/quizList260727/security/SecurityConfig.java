@@ -1,4 +1,4 @@
-package com.example.quizList260727.common.config;
+package com.example.quizList260727.security;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class SecurityConfig {
 
 	// 須注意此處將security全數放行，等同幾乎無安全驗證
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http.csrf(csrf -> csrf.disable())
 				// 開啟CORS支援，並套用下方 corsConfigurationSource() 的規則，
 				// 否則即使 authorizeHttpRequests 全部 permitAll，
