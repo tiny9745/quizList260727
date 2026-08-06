@@ -4,7 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.quizList260727.user.dto.LogInRequest;
+import com.example.quizList260727.user.dto.LoginRequest;
 import com.example.quizList260727.user.dto.LoginResponse;
 import com.example.quizList260727.user.dto.PermissionVerificationRequest;
 import com.example.quizList260727.user.dto.PermissionVerificationResponse;
@@ -27,7 +27,7 @@ public class UserService {
 	}
 
 	@Transactional(readOnly = true)
-	public LoginResponse logInByUser(LogInRequest Request) {
+	public LoginResponse logInByUser(LoginRequest Request) {
 
 		if (!Request.getEmail().matches(emailRegex)) {
 			throw new RuntimeException("Email 格式錯誤");

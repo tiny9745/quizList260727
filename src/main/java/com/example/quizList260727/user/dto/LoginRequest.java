@@ -2,7 +2,7 @@ package com.example.quizList260727.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class LogInRequest {
+public class LoginRequest {
 	
 	@NotBlank
 	private String email;
@@ -10,7 +10,7 @@ public class LogInRequest {
 	@NotBlank
 	private String password;
 	
-	public LogInRequest() {
+	public LoginRequest() {
 
 	}
 
