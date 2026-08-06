@@ -1,6 +1,5 @@
 package com.example.quizList260727.user.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,8 +16,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/user")
 public class UserController {
 
-	@Autowired
 	UserService userService;
+	
+	public UserController(UserService userService) {
+		this.userService = userService;
+	}
 
 	@PostMapping("/log-in")
 	public ResponseEntity<LoginResponse> logInByPassword(@Valid @RequestBody LoginRequest request) {
