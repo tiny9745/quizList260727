@@ -444,8 +444,7 @@ public class QuizService {
 
 	// 回覆
 	private void validateFillAnswers(List<Question> questions, List<QuestionAnswerRequest> answers) {
-
-		System.out.println("確認接收的資料是否合法中");
+		System.out.println("確認接收的資料是否合法中...");
 		System.out.println("DB Questions:");
 		questions.forEach(q -> System.out.println("question id=" + q.getId() + ", num=" + q.getQuestionNum()));
 
