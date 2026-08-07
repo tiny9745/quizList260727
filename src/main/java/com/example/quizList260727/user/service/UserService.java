@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.quizList260727.security.JwtService;
 import com.example.quizList260727.user.dto.LoginRequest;
 import com.example.quizList260727.user.dto.LoginResponse;
 import com.example.quizList260727.user.dto.PermissionVerificationRequest;
@@ -17,13 +18,15 @@ import com.example.quizList260727.user.respository.UserRepository;
 public class UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final UserRepository userRepository;
+	private final JwtService jwtService;
 
 	private String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 	private String passwordRegex = "^[A-Za-z][A-Za-z0-9]{7,15}$";
 
-	public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository) {
+	public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository, JwtService jwtService) {
 		this.passwordEncoder = passwordEncoder;
 		this.userRepository = userRepository;
+		this.jwtService = jwtService;
 	}
 
 	@Transactional(readOnly = true)
@@ -40,15 +43,15 @@ public class UserService {
 		// 查詢 User的Email
 		User user = userRepository.findByEmail(Request.getEmail()).orElseThrow(() -> new RuntimeException("帳號不存在"));
 
-		// 尚未使用雜湊
-//		if (!Request.getPassword().equals(user.getPassword())) {
-//			throw new RuntimeException("密碼錯誤");
-//		}
 		if (!passwordEncoder.matches(Request.getPassword(), user.getPassword())) {
-		    throw new RuntimeException("密碼錯誤");
+			throw new RuntimeException("密碼錯誤");
 		}
 
-		return new LoginResponse(user.getEmail(), user.getName(), user.getPermissions());
+		// 登入成功，簽發 Access Token，前端會存進 sessionStorage，
+		// 之後呼叫需要登入的 API (例如 /api/quiz/**) 時帶在 Authorization Header
+		String token = jwtService.generateToken(user.getEmail(), user.getPermissions().name());
+
+		return new LoginResponse(user.getEmail(), user.getName(), user.getPermissions(), token);
 	}
 
 	@Transactional
@@ -61,5 +64,7 @@ public class UserService {
 		PermissionVerificationResponse response = new PermissionVerificationResponse(MemberLevel.MEMBER);
 		return response;
 	}
+	
+	
 
 }

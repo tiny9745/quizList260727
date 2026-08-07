@@ -4,19 +4,22 @@ import com.example.quizList260727.user.enums.MemberLevel;
 
 public class LoginResponse {
 	private String email;
-	
+
 	private String name;
-	
+
 	private MemberLevel permissions;
+
+	private String token;
 
 	public LoginResponse() {
 
 	}
 
-	public LoginResponse(String email, String name, MemberLevel permissions) {
+	public LoginResponse(String email, String name, MemberLevel permissions, String token) {
 		this.email = email;
 		this.name = name;
 		this.permissions = permissions;
+		this.token = token;
 	}
 
 	public String getEmail() {
@@ -41,5 +44,13 @@ public class LoginResponse {
 
 	public void setPermissions(MemberLevel permissions) {
 		this.permissions = permissions;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
 	}
 }
