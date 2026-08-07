@@ -3,7 +3,6 @@ package com.example.quizList260727.user.dto;
 import com.example.quizList260727.user.enums.MemberLevel;
 
 public class UserMeResponse {
-
     private String email;
     private String userName;
     private MemberLevel memberLevel;

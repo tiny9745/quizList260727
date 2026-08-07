@@ -75,7 +75,7 @@ public class QuizController {
 	public ResponseEntity<ApiResponse> updatePublish(@PathVariable("id") Long id,
 			@Valid @RequestBody PublishRequest request) {
 		quizService.updatePublishQuiz(id, request);
-		return ResponseEntity.ok(new ApiResponse(true, "Quiz publish update successfully!"));
+		return ResponseEntity.ok(ApiResponse.success(null));
 	}
 
 	/**

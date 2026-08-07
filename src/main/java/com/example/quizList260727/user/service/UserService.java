@@ -23,6 +23,11 @@ public class UserService {
 
 	private String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 	private String passwordRegex = "^[A-Za-z][A-Za-z0-9]{7,15}$";
+	private String phoneRegex = "^(09\\d{8}|0[2-8]\\d{7,8})$";
+
+	private String emailFromatError = "Email 格式錯誤";
+	private String passwordFromatError = "Password 格式錯誤";
+	private String userNotExist = "帳號不存在";
 
 	public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository, JwtService jwtService) {
 		this.passwordEncoder = passwordEncoder;
@@ -31,20 +36,21 @@ public class UserService {
 	}
 
 	@Transactional(readOnly = true)
-	public LoginResponse logInByUser(LoginRequest Request) {
+	public LoginResponse logInByUser(LoginRequest request) {
 
-		if (!Request.getEmail().matches(emailRegex)) {
-			throw new RuntimeException("Email 格式錯誤");
+		if (!request.getEmail().matches(emailRegex)) {
+			throw new RuntimeException(emailFromatError);
 		}
 
-		if (!Request.getPassword().matches(passwordRegex)) {
-			throw new RuntimeException("Password 格式錯誤");
+		if (!request.getPassword().matches(passwordRegex)) {
+			throw new RuntimeException(passwordFromatError);
 		}
 
 		// 查詢 User的Email
-		User user = userRepository.findByEmail(Request.getEmail()).orElseThrow(() -> new RuntimeException("帳號不存在"));
+		User user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new RuntimeException(userNotExist));
 
-		if (!passwordEncoder.matches(Request.getPassword(), user.getPassword())) {
+		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			throw new RuntimeException("密碼錯誤");
 		}
 
@@ -56,7 +62,30 @@ public class UserService {
 	}
 
 	@Transactional
-	public void registerByUser(RegisterRequest registerRequest) {
+	public void registerByUser(RegisterRequest request) {
+		if (!request.getEmail().matches(emailRegex)) {
+			throw new RuntimeException(emailFromatError);
+		}
+
+		if (!request.getPassword().matches(passwordRegex)) {
+			throw new RuntimeException(passwordFromatError);
+		}
+
+		if (!request.getPhone().matches(phoneRegex)) {
+			throw new RuntimeException("電話格式異常");
+		}
+
+		if (request.getAge() < 0 || request.getAge() > 200) {
+			throw new RuntimeException("年齡異常");
+		}
+
+		if (request.getName().length() > 50) {
+			throw new RuntimeException("名字長度過長");
+		}
+
+		if (userRepository.findByEmail(request.getEmail()) != null) {
+			throw new RuntimeException("User is exist");
+		}
 
 	}
 
@@ -65,16 +94,10 @@ public class UserService {
 		PermissionVerificationResponse response = new PermissionVerificationResponse(MemberLevel.MEMBER);
 		return response;
 	}
-	
-	public UserMeResponse getUserByEmail(String email){
-	    User user = userRepository.findByEmail(email).orElseThrow(
-	            () -> new RuntimeException("User not found")
-	        );
-	    return new UserMeResponse(
-	        user.getEmail(),
-	        user.getName(),
-	        user.getPermissions()
-	    );
+
+	public UserMeResponse getUserByEmail(String email) {
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException(userNotExist));
+		return new UserMeResponse(user.getEmail(), user.getName(), user.getPermissions());
 	}
 
 }

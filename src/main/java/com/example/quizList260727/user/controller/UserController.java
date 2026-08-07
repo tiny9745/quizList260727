@@ -1,7 +1,7 @@
 package com.example.quizList260727.user.controller;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.quizList260727.user.dto.LoginRequest;
 import com.example.quizList260727.user.dto.LoginResponse;
+import com.example.quizList260727.user.dto.RegisterRequest;
 import com.example.quizList260727.user.dto.UserMeResponse;
 import com.example.quizList260727.user.service.UserService;
 
@@ -31,13 +32,15 @@ public class UserController {
 		return ResponseEntity.ok(result);
 	}
 	
+	@PostMapping("/sign-up")
+	public void signupUser(@Valid @RequestBody RegisterRequest request) {
+		userService.registerByUser(request);
+	}
+	
 	@GetMapping("/me")
 	public ResponseEntity<UserMeResponse> getCurrentUser(Authentication authentication) {
-
 	    String email = authentication.getName();
-
 	    UserMeResponse user = userService.getUserByEmail(email);
-
 	    return ResponseEntity.ok(user);
 	}
 }
