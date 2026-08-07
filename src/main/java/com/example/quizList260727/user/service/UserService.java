@@ -10,6 +10,7 @@ import com.example.quizList260727.user.dto.LoginResponse;
 import com.example.quizList260727.user.dto.PermissionVerificationRequest;
 import com.example.quizList260727.user.dto.PermissionVerificationResponse;
 import com.example.quizList260727.user.dto.RegisterRequest;
+import com.example.quizList260727.user.dto.UserMeResponse;
 import com.example.quizList260727.user.entity.User;
 import com.example.quizList260727.user.enums.MemberLevel;
 import com.example.quizList260727.user.respository.UserRepository;
@@ -65,6 +66,15 @@ public class UserService {
 		return response;
 	}
 	
-	
+	public UserMeResponse getUserByEmail(String email){
+	    User user = userRepository.findByEmail(email).orElseThrow(
+	            () -> new RuntimeException("User not found")
+	        );
+	    return new UserMeResponse(
+	        user.getEmail(),
+	        user.getName(),
+	        user.getPermissions()
+	    );
+	}
 
 }
