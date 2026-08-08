@@ -59,6 +59,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						// 登入/註冊等 API 無須驗證即可存取
 						.requestMatchers("/api/user/log-in").permitAll()
+						.requestMatchers("/api/user/sign-up").permitAll()
 						// 其餘 /api/** (包含 /api/quiz/**) 皆須登入才能存取
 						.requestMatchers("/api/**").authenticated()
 						.anyRequest().permitAll())

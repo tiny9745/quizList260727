@@ -1,5 +1,7 @@
 package com.example.quizList260727.user.service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,19 +41,19 @@ public class UserService {
 	public LoginResponse logInByUser(LoginRequest request) {
 
 		if (!request.getEmail().matches(emailRegex)) {
-			throw new RuntimeException(emailFromatError);
+			throw new IllegalArgumentException(emailFromatError);
 		}
 
 		if (!request.getPassword().matches(passwordRegex)) {
-			throw new RuntimeException(passwordFromatError);
+			throw new IllegalArgumentException(passwordFromatError);
 		}
 
 		// 查詢 User的Email
 		User user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(() -> new RuntimeException(userNotExist));
+				.orElseThrow(() -> new IllegalArgumentException(userNotExist));
 
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-			throw new RuntimeException("密碼錯誤");
+			throw new IllegalArgumentException("密碼錯誤");
 		}
 
 		// 登入成功，簽發 Access Token，前端會存進 sessionStorage，
@@ -64,28 +66,46 @@ public class UserService {
 	@Transactional
 	public void registerByUser(RegisterRequest request) {
 		if (!request.getEmail().matches(emailRegex)) {
-			throw new RuntimeException(emailFromatError);
+			throw new IllegalArgumentException(emailFromatError);
 		}
 
 		if (!request.getPassword().matches(passwordRegex)) {
-			throw new RuntimeException(passwordFromatError);
+			throw new IllegalArgumentException(passwordFromatError);
 		}
 
 		if (!request.getPhone().matches(phoneRegex)) {
-			throw new RuntimeException("電話格式異常");
+			throw new IllegalArgumentException("電話格式異常");
 		}
 
 		if (request.getAge() < 0 || request.getAge() > 200) {
-			throw new RuntimeException("年齡異常");
+			throw new IllegalArgumentException("年齡異常");
 		}
 
 		if (request.getName().length() > 50) {
-			throw new RuntimeException("名字長度過長");
+			throw new IllegalArgumentException("名字長度過長");
 		}
+		
+		 // 1. 檢查 Email 是否已存在
+		if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+		    throw new IllegalArgumentException("User is exist");
+		}
+		
+		// 2. 建立 User Entity
+	    User user = new User();
 
-		if (userRepository.findByEmail(request.getEmail()) != null) {
-			throw new RuntimeException("User is exist");
-		}
+	    user.setName(request.getName());
+	    user.setEmail(request.getEmail());
+	    user.setPhone(request.getPhone());
+	    user.setAge(request.getAge());
+	    
+	    user.setCreatedAt(LocalDateTime.now());
+	    user.setPermissions(MemberLevel.MEMBER);
+	    
+	    // 3. 密碼不可直接存明文
+	    user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+	    // 4. 儲存到資料庫
+	    userRepository.save(user);
 
 	}
 
